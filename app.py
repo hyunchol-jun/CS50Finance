@@ -1,4 +1,5 @@
-from flask import Flask, render_template, redirect, session, request
+from flask import Flask, render_template, redirect, session, request, flash
+from flask.helpers import get_flashed_messages
 from flask_session import Session
 from tempfile import mkdtemp
 from helpers import login_required, apology, lookup, usd
@@ -76,10 +77,35 @@ def quote():
 def register():
     return render_template("register.html")
 
-@app.route("/buy")
+@app.route("/buy", methods=["GET", "POST"])
 @login_required
 def buy():
-    return render_template("buy.html")
+    if request.method == "POST":
+        symbol = request.form.get("symbol")
+        shares = request.form.get("shares")
+        quote = lookup(symbol)
+        user_cash = 10000.00
+
+        if not symbol or quote is None:
+            return apology("Symbol not valid", 400)
+
+        try:
+            shares = int(shares)
+            if shares < 1:
+                return apology("Number of shares must be greater or equal to 1", 400)
+        except ValueError:
+            return apology("Number of shares must be a positive integer", 400)
+            
+        total_price = shares * quote["price"]
+        
+        if user_cash < total_price:
+            return apology("You don't have sufficient cash", 400)
+        else:
+            flash("Transaction successful")
+            return redirect("/")
+
+    else:
+        return render_template("buy.html")
 
 @app.route("/sell")
 @login_required

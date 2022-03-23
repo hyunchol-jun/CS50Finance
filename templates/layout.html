@@ -6,6 +6,13 @@
         </title>
     </head>
     <body>
+        {% if get_flashed_messages() %}
+            <header>
+                <div role="alert">
+                    {{ get_flashed_messages() | join(" ") }}
+                </div>
+            </header>
+        {% endif %}
         {% block body %}{% endblock %}
     </body>
 </html>

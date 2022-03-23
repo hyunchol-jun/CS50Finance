@@ -2,6 +2,9 @@
 
 {% block body %}
 
-    buy
+<form action="/buy" method="post">
+    <input type="text" autocomplete="off" autofocus name="symbol" placeholder="Symbol">
+    <input autocomplete="off" name="shares" placeholder="Shares" type="text">
+    <input type="submit" value="Buy">
 
 {% endblock %}
