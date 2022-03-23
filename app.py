@@ -1,7 +1,7 @@
-from flask import Flask, render_template, redirect, session
+from flask import Flask, render_template, redirect, session, request
 from flask_session import Session
 from tempfile import mkdtemp
-from helpers import login_required
+from helpers import login_required, apology
 
 app = Flask(__name__)
 
@@ -27,12 +27,28 @@ Session(app)
 def index():
     return render_template("index.html")
 
-@app.route("/login")
+@app.route("/login", methods=["GET", "POST"])
 def login():
-    return render_template("login.html")
+    session.clear() # Forget any user_id
+
+    if request.method == "POST":
+        username = request.form.get("username")
+        password = request.form.get("password")
+
+        if not username:    # Ensure username was submitted
+            return apology("must provide username", 403)
+        elif not password:  # Ensure password was submitted
+            return apology("must provide password", 403)
+
+        session["user_id"] = username    # Remember which user has logged in
+
+        return redirect("/")
+    else:
+        return render_template("login.html")
 
 @app.route("/logout")
 def logout():
+    session.clear() # Forget any user_id
     return redirect("/")
 
 @app.route("/quote")
