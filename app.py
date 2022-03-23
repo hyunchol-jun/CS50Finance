@@ -1,7 +1,7 @@
 from flask import Flask, render_template, redirect, session, request
 from flask_session import Session
 from tempfile import mkdtemp
-from helpers import login_required, apology, lookup
+from helpers import login_required, apology, lookup, usd
 
 app = Flask(__name__)
 
@@ -15,6 +15,9 @@ def after_request(response):
     response.headers["Expires"] = 0
     response.headers["Pragma"] = "no-cache"
     return response
+
+# Custom filter
+app.jinja_env.filters["usd"] = usd
 
 # Configure session to use filesystem (instead of signed cookies)
 app.config["SESSION_FILE_DIR"] = mkdtemp()
