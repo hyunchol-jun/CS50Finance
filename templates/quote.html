@@ -2,6 +2,9 @@
 
 {% block body %}
 
-    quote
+    <form action="/quote" method="post">
+        <input autocomplete="off" autofocus name="symbol" placeholder="Symbol" type="text">
+        <input type="submit" text="Quote">
+    </form>
 
 {% endblock %}

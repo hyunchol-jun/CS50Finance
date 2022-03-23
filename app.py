@@ -1,7 +1,7 @@
 from flask import Flask, render_template, redirect, session, request
 from flask_session import Session
 from tempfile import mkdtemp
-from helpers import login_required, apology
+from helpers import login_required, apology, lookup
 
 app = Flask(__name__)
 
@@ -51,10 +51,23 @@ def logout():
     session.clear() # Forget any user_id
     return redirect("/")
 
-@app.route("/quote")
+@app.route("/quote", methods=["GET", "POST"])
 @login_required
 def quote():
-    return render_template("quote.html")
+    if request.method == "POST":
+        quote = lookup(request.form.get("symbol"))
+
+        if quote is None:   # Ensure the symbol was submitted
+            return apology("Not a valid symbol", 400)
+        else:
+            return render_template(
+                "quoted.html",
+                name=quote["name"],
+                symbol=quote["symbol"],
+                price=quote["price"]
+            )
+    else:
+        return render_template("quote.html")
 
 @app.route("/register")
 def register():

@@ -1,5 +1,7 @@
 from flask import redirect, session, render_template
 from functools import wraps
+import os
+import requests
 
 def login_required(f):
     """
@@ -16,3 +18,22 @@ def login_required(f):
 
 def apology(message, code=400):
     return render_template("apology.html", code=code, message=message), code
+
+def lookup(symbol):
+    try:
+        api_key = os.environ.get("API_KEY")
+        url = f"https://cloud.iexapis.com/stable/stock/{symbol}/quote?token={api_key}"
+        response = requests.get(url)
+        response.raise_for_status()
+    except requests.RequestException:
+        return None
+
+    try:
+        quote = response.json()
+        return {
+            "name": quote["companyName"],
+            "price": float(quote["latestPrice"]),
+            "symbol": quote["symbol"]
+        }
+    except (KeyError, TypeError, ValueError):
+        return None
