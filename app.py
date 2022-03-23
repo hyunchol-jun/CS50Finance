@@ -1,6 +1,7 @@
-from flask import Flask, render_template, redirect
+from flask import Flask, render_template, redirect, session
 from flask_session import Session
 from tempfile import mkdtemp
+from helpers import login_required
 
 app = Flask(__name__)
 
@@ -22,6 +23,7 @@ app.config["SESSION_TYPE"] = "filesystem"
 Session(app)
 
 @app.route("/")
+@login_required
 def index():
     return render_template("index.html")
 
@@ -34,6 +36,7 @@ def logout():
     return redirect("/")
 
 @app.route("/quote")
+@login_required
 def quote():
     return render_template("quote.html")
 
@@ -42,13 +45,16 @@ def register():
     return render_template("register.html")
 
 @app.route("/buy")
+@login_required
 def buy():
     return render_template("buy.html")
 
 @app.route("/sell")
+@login_required
 def sell():
     return render_template("sell.html")
 
 @app.route("/history")
+@login_required
 def history():
     return render_template("history.html")
