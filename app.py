@@ -107,10 +107,32 @@ def buy():
     else:
         return render_template("buy.html")
 
-@app.route("/sell")
+@app.route("/sell", methods=["GET", "POST"])
 @login_required
 def sell():
-    return render_template("sell.html")
+    if request.method == "POST":
+        symbol = request.form.get("symbol")
+        shares = request.form.get("shares")
+        try:
+            shares = int(shares)
+            if shares < 1:
+                return apology("Number of shares must be positive")
+        except ValueError:
+            return apology("Number of shares must be positive integer")
+        if not symbol:
+            return apology("missing symbol")
+        stocks = 10;
+        if shares > stocks:
+            return apology("You don't have that many shares to sell")
+        price = lookup(symbol)["price"]
+        total_price = price * shares
+
+        flash("Successfully sold!")
+        return redirect("/")
+
+        
+    else:
+        return render_template("sell.html")
 
 @app.route("/history")
 @login_required

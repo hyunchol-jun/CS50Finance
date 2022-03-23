@@ -2,6 +2,8 @@
 
 {% block body %}
 
-    sell
+<form action="/sell" method="post">
+    <input type="text" autocomplete="off" name="shares" placeholder="Shares">
+    <input type="submit" value="Sell">
 
 {% endblock %}
