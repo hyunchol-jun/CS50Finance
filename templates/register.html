@@ -2,6 +2,11 @@
 
 {% block body %}
 
-    register
+<form action="/register" method="post">
+    <input type="text" autocomplete="off" autofocus placeholder="Username" name="username">
+    <input type="password" placeholder="Password" name="password">
+    <input type="password" placeholder="Confirm password" name="confirmation">
+    <input type="submit" value="Register">
+</form>
 
 {% endblock %}

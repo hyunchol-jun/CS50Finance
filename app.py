@@ -73,9 +73,28 @@ def quote():
     else:
         return render_template("quote.html")
 
-@app.route("/register")
+@app.route("/register", methods=["GET", "POST"])
 def register():
-    return render_template("register.html")
+    if request.method == "POST":
+        username = request.form.get("username")
+        password = request.form.get("password")
+        confirmation = request.form.get("confirmation")
+        
+        duplicateName = None
+
+        if not username:
+            return apology("must provide username", 400)
+        elif duplicateName is not None:
+            return apology("username already exists", 400)
+        elif not confirmation:
+            return apology("must confirm password", 400)
+        elif not password == confirmation:
+            return apology("passwords must match", 400)
+        else:
+            return redirect("/")
+            
+    else:
+        return render_template("register.html")
 
 @app.route("/buy", methods=["GET", "POST"])
 @login_required
