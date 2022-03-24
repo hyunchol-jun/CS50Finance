@@ -161,6 +161,7 @@ def buy():
                     [symbol, shares, session["user_id"], quote["price"], "buy"]
                     )
             connection.commit()
+
             flash("Transaction successful")
             return redirect("/")
 
@@ -181,8 +182,12 @@ def sell():
             return apology("Number of shares must be positive integer")
         if not symbol:
             return apology("missing symbol")
-        stocks = 10;
-        if shares > stocks:
+        stocks = cur.execute(
+                "SELECT SUM(shares) FROM stocks " \
+                "WHERE userID = ? AND symbol = ?",
+                [session["user_id"], symbol]
+                ).fetchone()
+        if shares > stocks[0]:
             return apology("You don't have that many shares to sell")
         price = lookup(symbol)["price"]
         total_price = price * shares
@@ -190,9 +195,12 @@ def sell():
         flash("Successfully sold!")
         return redirect("/")
 
-        
     else:
-        return render_template("sell.html")
+        stocks = cur.execute(
+                "SELECT DISTINCT symbol FROM stocks WHERE userID = ?",
+                [session["user_id"]]
+                ).fetchall()
+        return render_template("sell.html", stocks=stocks)
 
 @app.route("/history")
 @login_required

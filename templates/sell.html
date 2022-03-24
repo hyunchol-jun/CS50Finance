@@ -3,6 +3,11 @@
 {% block body %}
 
 <form action="/sell" method="post">
+    <select name="symbol">
+        <option disable selected>Symbol</option>
+        {% for stock in stocks %}
+        <option value="{{ stock[0] }}">{{ stock[0] }}</option>
+        {% endfor %}
     <input type="text" autocomplete="off" name="shares" placeholder="Shares">
     <input type="submit" value="Sell">
 
