@@ -55,11 +55,10 @@ def login():
                 "SELECT * FROM users WHERE (username = ?)", 
                 [username]
             ).fetchone()
-        if user is None:
-            return apology("Not a valid ID", 403)
+        hashChecked = check_password_hash(user[2], password)
+        if user is None or not hashChecked:
+            return apology("Invalid username and/or password", 403)
         
-        userIndex = user.keys().index('username')
-
         session["user_id"] = username    # Remember which user has logged in
 
         return redirect("/")
@@ -119,7 +118,6 @@ def register():
             connection.commit()
 
             return redirect("/")
-
 
     else:
         return render_template("register.html")
