@@ -191,7 +191,17 @@ def sell():
             return apology("You don't have that many shares to sell")
         price = lookup(symbol)["price"]
         total_price = price * shares
-
+        cur.execute(
+                "UPDATE users SET cash = cash + ? WHERE id = ?",
+                [total_price, session["user_id"]]
+                )
+        cur.execute(
+                "INSERT INTO stocks " \
+                "(symbol, shares, userID, price, operation)" \
+                "VALUES (?, ?, ?, ?, ?)",
+                [symbol, -shares, session["user_id"], price, "sell"]
+                )
+        connection.commit()
         flash("Successfully sold!")
         return redirect("/")
 
