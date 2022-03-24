@@ -36,7 +36,35 @@ cur = connection.cursor()
 @app.route("/")
 @login_required
 def index():
-    return render_template("index.html")
+    user_cash = cur.execute(
+            "SELECT cash FROM users WHERE id = ?",
+            [session["user_id"]]
+            ).fetchone()[0]
+    stocks = cur.execute(
+            "SELECT symbol, SUM(shares) FROM stocks WHERE userID = ?" \
+            "GROUP BY symbol",
+            [session["user_id"]]
+            ).fetchall()
+    stocksList = [{}]
+    totalStockValue = 0.0
+    for stock in stocks:
+        stockDict = {}
+        quote = lookup(stock[0])
+        stockDict["symbol"] = stock[0]
+        stockDict["shares"] = stock[1]
+        stockDict["name"] = quote["name"]
+        stockDict["price"] = quote["price"]
+        stockDict["total"] = quote["price"] * stock[1]
+        stocksList.append(stockDict)
+        totalStockValue += stockDict["total"]
+
+    totalCash = totalStockValue + user_cash
+    return render_template(
+            "index.html",
+            stocks=stocksList,
+            user_cash=user_cash,
+            total_cash=totalCash
+            )
 
 @app.route("/login", methods=["GET", "POST"])
 def login():
@@ -215,4 +243,6 @@ def sell():
 @app.route("/history")
 @login_required
 def history():
-    return render_template("history.html")
+    stocks = cur.execute("SELECT * FROM stocks WHERE userID = ?",
+            [session["user_id"]]).fetchall()
+    return render_template("history.html", stocks=stocks)

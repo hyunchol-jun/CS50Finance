@@ -1,7 +1,40 @@
 {% extends "layout.html" %}
 
 {% block body %}
+{% with messages = get_flashed_messages() %}
+{% if messages %}
+<header role="alert">
+    {{ message }}
+</header>
+{% endif %}
+{% endwith %}
 
-    Hello, world!
-
+<table>
+    <thead>
+        <th>Symbol</th>
+        <th>Name</th>
+        <th>Shares</th>
+        <th>Price</th>
+        <th>Total</th>
+    </thead>
+    <tbody>
+        {% for stock in stocks %}
+        <tr>
+            <td>{{ stock.symbol }}</td>
+            <td>{{ stock.name }}</td>
+            <td>{{ stock.shares }}</td>
+            <td>{{ stock.price }}</td>
+            <td>{{ stock.total }}</td>
+        </tr>
+        {% endfor %}
+        <tr>
+            <td colspan="4">CASH</td>
+            <td>{{user_cash | usd}}</td>
+        </tr>
+        <tfoot>
+            <td colspan="4"></td>
+            <td>{{total_cash | usd}}</td>
+        </tfoot>
+    </tbody>
+</table>
 {% endblock %}
