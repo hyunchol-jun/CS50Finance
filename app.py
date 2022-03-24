@@ -3,6 +3,7 @@ from flask.helpers import get_flashed_messages
 from flask_session import Session
 from tempfile import mkdtemp
 import sqlite3
+from werkzeug.security import check_password_hash, generate_password_hash
 from helpers import login_required, apology, lookup, usd
 
 app = Flask(__name__)
@@ -30,7 +31,7 @@ Session(app)
 # Create sqlite3 database connection 
 connection = sqlite3.connect("finance.db", check_same_thread=False)
 connection.isolation_level = None
-db = connection.cursor()
+cur = connection.cursor()
 
 @app.route("/")
 @login_required
@@ -49,6 +50,15 @@ def login():
             return apology("must provide username", 403)
         elif not password:  # Ensure password was submitted
             return apology("must provide password", 403)
+
+        user = cur.execute(
+                "SELECT * FROM users WHERE (username = ?)", 
+                [username]
+            ).fetchone()
+        if user is None:
+            return apology("Not a valid ID", 403)
+        
+        userIndex = user.keys().index('username')
 
         session["user_id"] = username    # Remember which user has logged in
 
@@ -86,7 +96,9 @@ def register():
         password = request.form.get("password")
         confirmation = request.form.get("confirmation")
         
-        duplicateName = None
+        duplicateName = cur.execute(
+                "SELECT * FROM users WHERE (username = ?)", [username]
+            ).fetchone()
 
         if not username:
             return apology("must provide username", 400)
@@ -97,8 +109,18 @@ def register():
         elif not password == confirmation:
             return apology("passwords must match", 400)
         else:
+            hash = generate_password_hash(
+                    password, method="pbkdf2:sha256", salt_length=8
+                    )
+            cur.execute(
+                    "INSERT INTO users (username, hash) VALUES (?, ?)",
+                    [username, hash]
+                    )
+            connection.commit()
+
             return redirect("/")
-            
+
+
     else:
         return render_template("register.html")
 
