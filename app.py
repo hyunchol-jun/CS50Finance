@@ -59,7 +59,7 @@ def login():
         if user is None or not hashChecked:
             return apology("Invalid username and/or password", 403)
         
-        session["user_id"] = username    # Remember which user has logged in
+        session["user_id"] = user[0]    # Remember which user has logged in
 
         return redirect("/")
     else:
@@ -129,7 +129,10 @@ def buy():
         symbol = request.form.get("symbol")
         shares = request.form.get("shares")
         quote = lookup(symbol)
-        user_cash = 10000.00
+        user_cash = cur.execute(
+                "SELECT cash FROM users WHERE (id = ?)",
+                [session["user_id"]]
+                ).fetchone()[0]
 
         if not symbol or quote is None:
             return apology("Symbol not valid", 400)
@@ -144,8 +147,20 @@ def buy():
         total_price = shares * quote["price"]
         
         if user_cash < total_price:
-            return apology("You don't have sufficient cash", 400)
+            return apology("You don't have sufficient fund", 400)
         else:
+            cur.execute(
+                    "UPDATE users SET cash = ? WHERE id = ?",
+                    [user_cash - total_price,
+                    session["user_id"]]
+                    )
+            cur.execute(
+                    "INSERT INTO stocks" \
+                    "(symbol, shares, userID, price, operation)" \
+                    "VALUES (?, ?, ?, ?, ?)",
+                    [symbol, shares, session["user_id"], quote["price"], "buy"]
+                    )
+            connection.commit()
             flash("Transaction successful")
             return redirect("/")
 
