@@ -1,21 +1,21 @@
 {% extends "layout.html" %}
 
-{% block body %}
+{% block main %}
 
-<table>
+<table class="table tablestriped">
     <thead>
-        <th>Symbol</th>
-        <th>Shares</th>
-        <th>Price</th>
-        <th>Transacted</th>
+        <th class="text-start">Symbol</th>
+        <th class="text-end">Shares</th>
+        <th class="text-end">Price</th>
+        <th class="text-end">Transacted</th>
     </thead>
     <tbody>
         {% for stock in stocks %}
         <tr>
-            <td>{{stock[0]}}</td>
-            <td>{{stock[1]}}</td>
-            <td>{{stock[2]}}</td>
-            <td>{{stock[3]}}</td>
+            <td class="text-start">{{stock[0]}}</td>
+            <td class="text-end">{{stock[1]}}</td>
+            <td class="text-end">{{stock[2]}}</td>
+            <td class="text-end">{{stock[3]}}</td>
         </tr>
         {% endfor %}
     </tbody>

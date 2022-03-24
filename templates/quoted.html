@@ -1,5 +1,7 @@
 {% extends "layout.html" %}
 
-{% block body %}
-    <p> A share of {{ name }} ({{ symbol }}) costs {{price | usd}}</p>
+{% block main %}
+<div>
+    <p class="pt-5"> A share of {{ name }} ({{ symbol }}) costs {{price | usd}}</p>
+</div>
 {% endblock %}

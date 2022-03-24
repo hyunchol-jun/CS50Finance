@@ -1,10 +1,14 @@
 {% extends "layout.html" %}
 
-{% block body %}
+{% block main %}
 
 <form action="/buy" method="post">
-    <input type="text" autocomplete="off" autofocus name="symbol" placeholder="Symbol">
-    <input autocomplete="off" name="shares" placeholder="Shares" type="text">
-    <input type="submit" value="Buy">
+    <div class="mb-3">
+        <input class="form-control mx-auto w-auto" type="text" autocomplete="off" autofocus name="symbol" placeholder="Symbol">
+    </div>
+    <div class="mb-3">
+        <input class="form-control mx-auto w-auto" autocomplete="off" name="shares" placeholder="Shares" type="number" min=1>
+    </div>
+    <input class="btn btn-primary" type="submit" value="Buy">
 
 {% endblock %}
