@@ -36,6 +36,7 @@ app.config["SQLALCHEMY_DATABASE_URI"] = os.getenv("DATABASE_URL")
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 db.init_app(app)
 
+# Create db tables
 def main():
     db.create_all()
 
@@ -87,8 +88,7 @@ def login():
 
         user = User.query.filter_by(username=username).first()
 
-        hashChecked = check_password_hash(user.hash, password)
-        if user is None or not hashChecked:
+        if user is None or not check_password_hash(user.hash, password):
             return apology("Invalid username and/or password", 403)
         
         session["user_id"] = user.id    # Remember which user has logged in
@@ -177,12 +177,8 @@ def buy():
             return apology("You don't have sufficient fund", 400)
         else:
             user.cash = user.cash - total_price
-            record = Stock(
-                    userID=user.id, symbol=symbol.upper(), shares=shares,
-                    price=quote["price"])
-            db.session.add(record)
-            db.session.commit()
-
+            user.add_record(
+                    symbol=symbol.upper(), shares=shares, price=quote["price"])
             flash("Transaction successful")
             return redirect("/")
 
@@ -214,10 +210,8 @@ def sell():
         total_price = price * shares
 
         user.cash = user.cash + total_price
-        stock = Stock(userID=user.id, symbol=symbol.upper(), 
-                        shares=-shares, price=price)
-        db.session.add(stock)
-        db.session.commit()
+        user.add_record(
+                symbol=symbol.upper(), shares=-shares, price=price)
 
         flash("Successfully sold!")
         return redirect("/")

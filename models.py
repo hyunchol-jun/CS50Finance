@@ -11,6 +11,12 @@ class User(db.Model):
     cash = db.Column(db.Float, nullable=False, default=10000.00)
     records = db.relationship('Stock', backref='holders', lazy=True)
 
+    def add_record(self, symbol, shares, price):
+        record = Stock(
+                symbol=symbol, shares=shares, price=price, userID=self.id)
+        db.session.add(record)
+        db.session.commit()
+
 class Stock(db.Model):
     __tablename__ = "stocks"
     id = db.Column(db.Integer, primary_key=True)
