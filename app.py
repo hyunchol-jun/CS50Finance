@@ -30,10 +30,11 @@ app.config["SESSION_TYPE"] = "filesystem"
 Session(app)
 
 # Configure sqlalchemy
-app.config["SQLALCHEMY_DATABASE_URI"] = 'sqlite:///test.db'
+app.config["SQLALCHEMY_DATABASE_URI"] = 'sqlite:///finance.db'
 db = SQLAlchemy(app)
 
 class User(db.Model):
+    __tablename__ = "users"
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(80), unique=True, nullable=False)
     hash = db.Column(db.String(120), unique=True, nullable=False)
@@ -41,11 +42,12 @@ class User(db.Model):
     records = db.relationship('Stock', backref='holders', lazy=True)
 
 class Stock(db.Model):
+    __tablename__ = "stocks"
     id = db.Column(db.Integer, primary_key=True)
     symbol = db.Column(db.String(20), nullable=False)
     shares = db.Column(db.Integer, nullable=False)
     price = db.Column(db.Float, nullable=False, default=0.00)
-    userID = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    userID = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
     date = db.Column(db.DateTime, nullable=False, default=datetime.now())
 
 @app.route("/")
