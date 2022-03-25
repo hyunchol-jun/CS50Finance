@@ -100,15 +100,13 @@ def login():
         elif not password:  # Ensure password was submitted
             return apology("must provide password", 403)
 
-        user = cur.execute(
-                "SELECT * FROM users WHERE (username = ?)", 
-                [username]
-            ).fetchone()
-        hashChecked = check_password_hash(user[2], password)
+        user = User.query.filter_by(username=username).first()
+
+        hashChecked = check_password_hash(user.hash, password)
         if user is None or not hashChecked:
             return apology("Invalid username and/or password", 403)
         
-        session["user_id"] = user[0]    # Remember which user has logged in
+        session["user_id"] = user.id    # Remember which user has logged in
 
         return redirect("/")
     else:
@@ -144,9 +142,7 @@ def register():
         password = request.form.get("password")
         confirmation = request.form.get("confirmation")
         
-        duplicateName = cur.execute(
-                "SELECT * FROM users WHERE (username = ?)", [username]
-            ).fetchone()
+        duplicateName = User.query.filter_by(username=username).first()
 
         if not username:
             return apology("must provide username", 400)
@@ -160,11 +156,10 @@ def register():
             hash = generate_password_hash(
                     password, method="pbkdf2:sha256", salt_length=8
                     )
-            cur.execute(
-                    "INSERT INTO users (username, hash) VALUES (?, ?)",
-                    [username, hash]
-                    )
-            connection.commit()
+
+            user = User(username=username, hash=hash)
+            db.session.add(user)
+            db.session.commit()
 
             return redirect("/")
 
