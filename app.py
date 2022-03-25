@@ -2,7 +2,6 @@ from flask import Flask, render_template, redirect, session, request, flash
 from flask.helpers import get_flashed_messages
 from flask_session import Session
 from tempfile import mkdtemp
-import sqlite3
 from werkzeug.security import check_password_hash, generate_password_hash
 from helpers import login_required, apology, lookup, usd
 from flask_sqlalchemy import SQLAlchemy
@@ -48,24 +47,15 @@ class Stock(db.Model):
     price = db.Column(db.Float, nullable=False, default=0.00)
     userID = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     date = db.Column(db.DateTime, nullable=False, default=datetime.now())
-    
-# Create sqlite3 database connection 
-connection = sqlite3.connect("finance.db", check_same_thread=False)
-connection.isolation_level = None
-cur = connection.cursor()
 
 @app.route("/")
 @login_required
 def index():
-    user_cash = cur.execute(
-            "SELECT cash FROM users WHERE id = ?",
-            [session["user_id"]]
-            ).fetchone()[0]
-    stocks = cur.execute(
-            "SELECT symbol, SUM(shares) FROM stocks WHERE userID = ?" \
-            "GROUP BY symbol",
-            [session["user_id"]]
-            ).fetchall()
+    user = User.query.filter_by(id=session["user_id"]).first()
+    stocks = db.session.query(
+            Stock.symbol, db.func.sum(Stock.shares)
+            ).where(Stock.userID==user.id).group_by(Stock.symbol
+                    ).having(db.func.sum(Stock.shares) > 0).all()
     stocksList = [{}]
     totalStockValue = 0.0
     for stock in stocks:
@@ -79,11 +69,11 @@ def index():
         stocksList.append(stockDict)
         totalStockValue += stockDict["total"]
 
-    totalCash = totalStockValue + user_cash
+    totalCash = totalStockValue + user.cash
     return render_template(
             "index.html",
             stocks=stocksList,
-            user_cash=user_cash,
+            user_cash=user.cash,
             total_cash=totalCash
             )
 
@@ -173,10 +163,7 @@ def buy():
         symbol = request.form.get("symbol")
         shares = request.form.get("shares")
         quote = lookup(symbol)
-        user_cash = cur.execute(
-                "SELECT cash FROM users WHERE (id = ?)",
-                [session["user_id"]]
-                ).fetchone()[0]
+        user = User.query.get(session["user_id"])
 
         if not symbol or quote is None:
             return apology("Symbol not valid", 400)
@@ -184,27 +171,22 @@ def buy():
         try:
             shares = int(shares)
             if shares < 1:
-                return apology("Number of shares must be greater or equal to 1", 400)
+                return apology(
+                        "Number of shares must be greater or equal to 1", 400)
         except ValueError:
             return apology("Number of shares must be a positive integer", 400)
             
         total_price = shares * quote["price"]
         
-        if user_cash < total_price:
+        if user.cash < total_price:
             return apology("You don't have sufficient fund", 400)
         else:
-            cur.execute(
-                    "UPDATE users SET cash = ? WHERE id = ?",
-                    [user_cash - total_price,
-                    session["user_id"]]
-                    )
-            cur.execute(
-                    "INSERT INTO stocks" \
-                    "(symbol, shares, userID, price, operation)" \
-                    "VALUES (?, ?, ?, ?, ?)",
-                    [symbol, shares, session["user_id"], quote["price"], "buy"]
-                    )
-            connection.commit()
+            user.cash = user.cash - total_price
+            record = Stock(
+                    userID=user.id, symbol=symbol.upper(), shares=shares,
+                    price=quote["price"])
+            db.session.add(record)
+            db.session.commit()
 
             flash("Transaction successful")
             return redirect("/")
@@ -215,6 +197,8 @@ def buy():
 @app.route("/sell", methods=["GET", "POST"])
 @login_required
 def sell():
+    user = User.query.get(session["user_id"])
+
     if request.method == "POST":
         symbol = request.form.get("symbol")
         shares = request.form.get("shares")
@@ -226,39 +210,30 @@ def sell():
             return apology("Number of shares must be positive integer")
         if not symbol:
             return apology("missing symbol")
-        stocks = cur.execute(
-                "SELECT SUM(shares) FROM stocks " \
-                "WHERE userID = ? AND symbol = ?",
-                [session["user_id"], symbol]
-                ).fetchone()
-        if shares > stocks[0]:
+        numOfStocks = db.session.query(db.func.sum(Stock.shares)).where(
+                        Stock.userID == user.id
+                        and Stock.symbol == symbol).first()[0]
+        if shares > numOfStocks:
             return apology("You don't have that many shares to sell")
         price = lookup(symbol)["price"]
         total_price = price * shares
-        cur.execute(
-                "UPDATE users SET cash = cash + ? WHERE id = ?",
-                [total_price, session["user_id"]]
-                )
-        cur.execute(
-                "INSERT INTO stocks " \
-                "(symbol, shares, userID, price, operation)" \
-                "VALUES (?, ?, ?, ?, ?)",
-                [symbol, -shares, session["user_id"], price, "sell"]
-                )
-        connection.commit()
+
+        user.cash = user.cash + total_price
+        stock = Stock(userID=user.id, symbol=symbol.upper(), 
+                        shares=-shares, price=price)
+        db.session.add(stock)
+        db.session.commit()
+
         flash("Successfully sold!")
         return redirect("/")
-
     else:
-        stocks = cur.execute(
-                "SELECT DISTINCT symbol FROM stocks WHERE userID = ?",
-                [session["user_id"]]
-                ).fetchall()
+        stocks = db.session.query(Stock.symbol, db.func.sum(Stock.shares)
+                ).where(Stock.userID==user.id).group_by(Stock.symbol
+                        ).having(db.func.sum(Stock.shares) > 0).all()
         return render_template("sell.html", stocks=stocks)
 
 @app.route("/history")
 @login_required
 def history():
-    stocks = cur.execute("SELECT * FROM stocks WHERE userID = ?",
-            [session["user_id"]]).fetchall()
+    stocks = Stock.query.filter_by(userID=session["user_id"]).order_by(Stock.date.desc()).all()
     return render_template("history.html", stocks=stocks)
