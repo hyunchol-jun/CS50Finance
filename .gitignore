@@ -1,2 +1,4 @@
 # Ignore .swp extension
 *.swp
+
+finance.db
