@@ -14,6 +14,11 @@ nav .navbar-brand .yellow {
     color: #f5b82e;
 }
 
+nav {
+    padding-left: 10px;
+    padding-right: 10px;
+}
+
 nav .navbar-brand .green {
     color: #2e944b;
 }
