@@ -47,7 +47,7 @@ if __name__ == "__main__":
 @app.route("/")
 @login_required
 def index():
-    user = User.query.filter_by(id=session["user_id"]).first()
+    user = session["user"]
     stocks = db.session.query(
             Stock.symbol, db.func.sum(Stock.shares)
             ).where(Stock.userID==user.id).group_by(Stock.symbol
@@ -91,7 +91,7 @@ def login():
         if user is None or not check_password_hash(user.hash, password):
             return apology("Invalid username and/or password", 403)
         
-        session["user_id"] = user.id    # Remember which user has logged in
+        session["user"] = user          # Remember which user has logged in
 
         return redirect("/")
     else:
@@ -158,7 +158,7 @@ def buy():
         symbol = request.form.get("symbol")
         shares = request.form.get("shares")
         quote = lookup(symbol)
-        user = User.query.get(session["user_id"])
+        user = session["user"]
 
         if not symbol or quote is None:
             return apology("Symbol not valid", 400)
@@ -188,7 +188,7 @@ def buy():
 @app.route("/sell", methods=["GET", "POST"])
 @login_required
 def sell():
-    user = User.query.get(session["user_id"])
+    user = session["user"]
 
     if request.method == "POST":
         symbol = request.form.get("symbol")
@@ -224,5 +224,6 @@ def sell():
 @app.route("/history")
 @login_required
 def history():
-    stocks = Stock.query.filter_by(userID=session["user_id"]).order_by(Stock.date.desc()).all()
+    user = session["user"]
+    stocks = user.records[::-1]
     return render_template("history.html", stocks=stocks)

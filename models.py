@@ -9,7 +9,7 @@ class User(db.Model):
     username = db.Column(db.String(80), unique=True, nullable=False)
     hash = db.Column(db.String(120), unique=True, nullable=False)
     cash = db.Column(db.Float, nullable=False, default=10000.00)
-    records = db.relationship('Stock', backref='holders', lazy=True)
+    records = db.relationship('Stock', backref='holder', lazy=True)
 
     def add_record(self, symbol, shares, price):
         record = Stock(
